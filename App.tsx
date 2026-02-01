@@ -101,7 +101,6 @@ export default function App() {
 
   useEffect(() => {
     loadJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
 
   // Utility to parse relative dates into Timestamps for sorting/filtering
