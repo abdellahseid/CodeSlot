@@ -23,7 +23,7 @@
 
 1. **Clone & Install:**
 ```bash
-git clone https://github.com/yourusername/codeslot.git
+git clone https://github.com/abdellahseid/CodeSlot.git
 cd codeslot && npm install
 
 ```
