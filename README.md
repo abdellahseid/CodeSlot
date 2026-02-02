@@ -1,20 +1,43 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# CodeSlot 
 
-# Run and deploy your AI Studio app
+**CodeSlot** aggregates verified remote front-end developer jobs from trusted global sources. It’s designed to help developers find legitimate opportunities fast, cutting through the noise and scams of traditional job boards.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/drive/1Ot7kG2KBtyJFSpnuY34a32RXUn6iwszc
+### Core Features
 
-## Run Locally
+* **Verified Listings:** Aggregated jobs from only trusted, high-signal sources.
+* **AI Filtering:** Smart categorization and search powered by **Gemini API**.
+* **Front-End Focused:** Tailored specifically for React, Vue, Angular, and CSS specialists.
+* **Zero Noise:** A clean, distraction-free interface built with **Tailwind CSS**.
 
-**Prerequisites:**  Node.js
+### Tech Stack
+
+* **React** + **TypeScript**
+* **Tailwind CSS**
+* **Google Gemini API**
+
+---
+
+### Quick Start
+
+1. **Clone & Install:**
+```bash
+git clone https://github.com/yourusername/codeslot.git
+cd codeslot && npm install
+
+```
 
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+2. **Configure:** Add `VITE_GEMINI_API_KEY=your_key` to your `.env`.
+3. **Launch:**
+```bash
+npm run dev
+
+```
+
+
+
+---
+
+Would you like me to add a section listing the specific job sources (like GitHub Jobs, We Work Remotely, etc.) that the app tracks?
