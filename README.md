@@ -36,8 +36,3 @@ npm run dev
 
 ```
 
-
-
----
-
-Would you like me to add a section listing the specific job sources (like GitHub Jobs, We Work Remotely, etc.) that the app tracks?
