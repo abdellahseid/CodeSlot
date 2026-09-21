@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Job, SearchFilters, SearchState } from './types';
-import { fetchJobsWithGemini } from './services/geminiService';
+import { fetchRealSoftwareJobs } from './services/jobService';
 import { JobCard } from './components/JobCard';
 import { JobDetailPanel } from './components/JobDetailPanel';
 import { FilterBar } from './components/FilterBar';
-import { Terminal, AlertCircle, Sun, Moon, ArrowDownCircle } from 'lucide-react';
+import { Terminal, AlertCircle, Sun, Moon, ArrowDownCircle, RefreshCw } from 'lucide-react';
 
 export default function App() {
   const [searchState, setSearchState] = useState<SearchState>({
@@ -15,8 +15,10 @@ export default function App() {
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
+    category: '',
     type: '',
     experience: '',
+    location: '',
     dateRange: '',
   });
 
@@ -25,6 +27,7 @@ export default function App() {
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
   const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [displayCount, setDisplayCount] = useState(24);
 
   // Initialize theme
   useEffect(() => {
@@ -37,7 +40,7 @@ export default function App() {
     // Load Bookmarks
     const saved = localStorage.getItem('devhunt_bookmarks');
     if (saved) {
-        setBookmarkedIds(JSON.parse(saved));
+      setBookmarkedIds(JSON.parse(saved));
     }
   }, []);
 
@@ -65,16 +68,16 @@ export default function App() {
   const loadJobs = useCallback(async (isLoadMore = false) => {
     if (!isLoadMore) {
         setSearchState(prev => ({ ...prev, isLoading: true, error: null }));
+        setDisplayCount(24);
     } else {
         setIsLoadingMore(true);
     }
 
     try {
-      const newData = await fetchJobsWithGemini(filters.query);
+      const newData = await fetchRealSoftwareJobs(filters);
       
       setSearchState(prev => {
         if (isLoadMore) {
-            // Filter duplicates based on ID or Title+Company combination to be safe
             const existingIds = new Set(prev.data.map(j => j.id));
             const uniqueNewJobs = newData.filter(job => !existingIds.has(job.id));
             
@@ -86,24 +89,27 @@ export default function App() {
         }
         return { isLoading: false, error: null, data: newData };
       });
+
+      if (isLoadMore) {
+        setDisplayCount(prev => prev + 24);
+      }
     } catch (error) {
       if (!isLoadMore) {
           setSearchState({ 
             isLoading: false, 
-            error: "Failed to fetch jobs. Please try again or check your connection.", 
+            error: "Failed to fetch software jobs. Please check your connection.", 
             data: [] 
           });
       }
     } finally {
         setIsLoadingMore(false);
     }
-  }, [filters.query]);
+  }, [filters]);
 
   useEffect(() => {
     loadJobs();
-  }, []); 
+  }, [filters]); 
 
-  // Utility to parse relative dates into Timestamps for sorting/filtering
   const parseRelativeTime = (timeStr: string): number => {
     const now = new Date();
     const str = timeStr.toLowerCase();
@@ -121,7 +127,10 @@ export default function App() {
     const monthMatch = str.match(/(\d+)\s+month/);
     if (monthMatch) return now.getTime() - parseInt(monthMatch[1]) * 30 * 86400000;
 
-    return 0; // oldest if parsing fails
+    const parsedDate = Date.parse(timeStr);
+    if (!isNaN(parsedDate)) return parsedDate;
+
+    return 0;
   };
 
   const filteredJobs = searchState.data
@@ -131,13 +140,16 @@ export default function App() {
           return false;
       }
 
+      const matchesCategory = !filters.category || job.category === filters.category;
       const matchesType = !filters.type || job.type.toLowerCase().includes(filters.type.toLowerCase());
       const matchesExp = !filters.experience || 
         (job.experienceLevel && job.experienceLevel.toLowerCase().includes(filters.experience.toLowerCase())) ||
         job.title.toLowerCase().includes(filters.experience.toLowerCase());
-      
+      const matchesLocation = !filters.location || job.location.toLowerCase().includes(filters.location.toLowerCase());
+
       const matchesQuery = !filters.query || 
         job.title.toLowerCase().includes(filters.query.toLowerCase()) || 
+        job.company.toLowerCase().includes(filters.query.toLowerCase()) ||
         job.tags.some(tag => tag.toLowerCase().includes(filters.query.toLowerCase()));
 
       let matchesDate = true;
@@ -151,12 +163,13 @@ export default function App() {
          else if (filters.dateRange === '30d') matchesDate = diff <= 30 * 86400000;
       }
 
-      return matchesType && matchesExp && matchesQuery && matchesDate;
+      return matchesCategory && matchesType && matchesExp && matchesLocation && matchesQuery && matchesDate;
     })
     .sort((a, b) => {
-        // Sort by Newest First
         return parseRelativeTime(b.postedAt) - parseRelativeTime(a.postedAt);
     });
+
+  const visibleJobs = filteredJobs.slice(0, displayCount);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-dev-900 text-slate-900 dark:text-dev-text font-sans selection:bg-dev-accent selection:text-white pb-10 transition-colors duration-300">
@@ -170,9 +183,9 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                CodeSlot <span className="text-blue-600 dark:text-dev-accent text-xs px-1.5 py-0.5 rounded border border-blue-200 dark:border-dev-accent/30 bg-blue-50 dark:bg-dev-accent/10">BETA</span>
+                CodeSlot <span className="text-blue-600 dark:text-dev-accent text-xs px-1.5 py-0.5 rounded border border-blue-200 dark:border-dev-accent/30 bg-blue-50 dark:bg-dev-accent/10">LIVE JOBS</span>
               </h1>
-              <p className="text-xs text-slate-500 dark:text-dev-muted font-mono hidden sm:block">REMOTE_FRONTEND_JOBS_AGGREGATOR</p>
+              <p className="text-xs text-slate-500 dark:text-dev-muted font-mono hidden sm:block">GLOBAL_SOFTWARE_ENGINEERING_JOBS_AGGREGATOR</p>
             </div>
           </div>
           
@@ -227,40 +240,40 @@ export default function App() {
           ) : searchState.error ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <AlertCircle size={48} className="text-red-500 dark:text-dev-danger mb-4" />
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Error Fetching Jobs</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Error Fetching Live Jobs</h3>
               <p className="text-slate-500 dark:text-dev-muted max-w-md mb-6">{searchState.error}</p>
               <button 
                 onClick={() => loadJobs(false)}
-                className="px-6 py-2 bg-slate-200 dark:bg-dev-800 hover:bg-slate-300 dark:hover:bg-dev-700 border border-slate-300 dark:border-dev-600 rounded-md text-sm font-mono transition-colors"
+                className="px-6 py-2 bg-slate-200 dark:bg-dev-800 hover:bg-slate-300 dark:hover:bg-dev-700 border border-slate-300 dark:border-dev-600 rounded-md text-sm font-mono transition-colors flex items-center gap-2"
               >
-                Try Again
+                <RefreshCw size={14} /> Try Again
               </button>
             </div>
           ) : filteredJobs.length === 0 ? (
             <div className="text-center py-20">
               <h3 className="text-lg font-mono text-slate-500 dark:text-dev-muted">
-                {showBookmarkedOnly ? "No marked jobs found." : "No jobs found matching your filters."}
+                {showBookmarkedOnly ? "No marked jobs found." : "No live software jobs found matching your filters."}
               </h3>
               <button 
                 onClick={() => {
-                    setFilters({ query: '', type: '', experience: '', dateRange: '' });
+                    setFilters({ query: '', category: '', type: '', experience: '', location: '', dateRange: '' });
                     setShowBookmarkedOnly(false);
                 }}
-                className="mt-4 text-blue-600 dark:text-dev-accent hover:underline text-sm"
+                className="mt-4 text-blue-600 dark:text-dev-accent hover:underline text-sm font-mono"
               >
-                Clear Filters
+                Reset All Filters
               </button>
             </div>
           ) : (
             <>
               <div className="flex justify-between items-end mb-4">
                  <h2 className="text-sm font-mono text-slate-500 dark:text-dev-muted">
-                   {showBookmarkedOnly ? 'SAVED JOBS' : 'ALL JOBS'} — SHOWING {filteredJobs.length} RESULT(S)
+                   {showBookmarkedOnly ? 'SAVED JOBS' : 'LIVE SOFTWARE JOBS'} — SHOWING {visibleJobs.length} OF {filteredJobs.length} ACTIVE LISTINGS
                  </h2>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-10">
-                {filteredJobs.map((job) => (
+                {visibleJobs.map((job) => (
                   <JobCard 
                     key={job.id} 
                     job={job} 
@@ -272,22 +285,22 @@ export default function App() {
               </div>
 
               {/* Load More Button */}
-              {!showBookmarkedOnly && (
+              {!showBookmarkedOnly && visibleJobs.length < filteredJobs.length && (
                   <div className="flex justify-center pb-20">
                     <button 
-                        onClick={() => loadJobs(true)}
+                        onClick={() => setDisplayCount(prev => prev + 24)}
                         disabled={isLoadingMore}
                         className="flex items-center gap-2 px-8 py-4 bg-white dark:bg-dev-800 border border-slate-200 dark:border-dev-700 hover:border-blue-500 dark:hover:border-dev-accent rounded-full shadow-lg hover:shadow-xl transition-all text-slate-600 dark:text-dev-text font-bold"
                     >
                         {isLoadingMore ? (
                             <>
                                 <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin"></div>
-                                Loading More Jobs...
+                                Loading More...
                             </>
                         ) : (
                             <>
                                 <ArrowDownCircle size={20} className="text-blue-600 dark:text-dev-accent" />
-                                Load More Jobs
+                                Load More Jobs ({filteredJobs.length - visibleJobs.length} remaining)
                             </>
                         )}
                     </button>

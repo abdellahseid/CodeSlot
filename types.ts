@@ -2,20 +2,25 @@ export interface Job {
   id: string;
   title: string;
   company: string;
-  location: string; // Should always confirm remote/worldwide
-  type: 'Full-time' | 'Contract' | 'Part-time' | 'Freelance';
+  location: string;
+  type: 'Full-time' | 'Contract' | 'Part-time' | 'Freelance' | string;
   salary?: string;
   tags: string[];
   description: string;
   postedAt: string;
   applyLink?: string;
-  experienceLevel?: 'Junior' | 'Mid' | 'Senior' | 'Lead';
+  experienceLevel?: 'Junior' | 'Mid' | 'Senior' | 'Lead' | string;
+  source?: string;
+  category?: string;
+  companyLogo?: string;
 }
 
 export interface SearchFilters {
   query: string;
+  category: string;
   type: string;
   experience: string;
+  location: string;
   dateRange: string;
 }
 

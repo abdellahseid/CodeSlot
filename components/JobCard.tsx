@@ -22,10 +22,15 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onClick, isActive, isBook
     >
       <div>
         {/* Top Meta */}
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-4 gap-2">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-gradient-to-br dark:from-dev-700 dark:to-dev-800 flex items-center justify-center border border-slate-200 dark:border-dev-600 text-slate-700 dark:text-dev-text font-bold text-sm shadow-sm relative">
-               {job.company.substring(0, 2).toUpperCase()}
+             <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-gradient-to-br dark:from-dev-700 dark:to-dev-800 flex items-center justify-center border border-slate-200 dark:border-dev-600 text-slate-700 dark:text-dev-text font-bold text-sm shadow-sm relative overflow-hidden shrink-0">
+               {job.companyLogo ? (
+                 <img src={job.companyLogo} alt={job.company} className="w-full h-full object-contain p-1" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+               ) : null}
+               <span className={job.companyLogo ? 'hidden' : 'block'}>
+                 {job.company.substring(0, 2).toUpperCase()}
+               </span>
                {isBookmarked && (
                  <div className="absolute -top-1 -right-1 bg-amber-500 text-white p-0.5 rounded-full border border-white dark:border-dev-800">
                     <Bookmark size={8} fill="currentColor" />
@@ -39,9 +44,17 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onClick, isActive, isBook
                <p className="text-sm text-slate-500 dark:text-dev-muted font-medium line-clamp-1">{job.company}</p>
              </div>
           </div>
-          <span className="text-[10px] font-mono font-medium text-slate-500 dark:text-dev-muted bg-slate-100 dark:bg-dev-900 px-2 py-1 rounded border border-slate-200 dark:border-dev-700 whitespace-nowrap">
-            {job.postedAt}
-          </span>
+
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <span className="text-[10px] font-mono font-medium text-slate-500 dark:text-dev-muted bg-slate-100 dark:bg-dev-900 px-2 py-0.5 rounded border border-slate-200 dark:border-dev-700 whitespace-nowrap">
+              {job.postedAt}
+            </span>
+            {job.source && (
+              <span className="text-[9px] font-mono uppercase tracking-wider text-blue-600 dark:text-cyan-400 bg-blue-50 dark:bg-dev-700 px-1.5 py-0.5 rounded border border-blue-200 dark:border-dev-600">
+                {job.source}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Details Grid */}
@@ -52,7 +65,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onClick, isActive, isBook
           </div>
           <div className="flex items-center gap-2">
             <Briefcase size={14} className="text-green-600 dark:text-dev-success shrink-0" />
-            <span>{job.type}</span>
+            <span className="truncate">{job.type}</span>
           </div>
           <div className="flex items-center gap-2">
             <DollarSign size={14} className="text-amber-600 dark:text-dev-warning shrink-0" />
@@ -60,7 +73,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onClick, isActive, isBook
           </div>
           <div className="flex items-center gap-2">
             <Clock size={14} className="text-slate-400 dark:text-dev-500 shrink-0" />
-            <span>{job.experienceLevel || 'Mid-Senior'}</span>
+            <span className="truncate">{job.experienceLevel || 'Mid-Senior'}</span>
           </div>
         </div>
       </div>

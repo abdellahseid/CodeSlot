@@ -1,6 +1,6 @@
 import React from 'react';
 import { Job } from '../types';
-import { X, ExternalLink, Globe, Calendar, CheckCircle, Code, Bookmark } from 'lucide-react';
+import { X, ExternalLink, Globe, Calendar, CheckCircle, Code, Bookmark, ShieldCheck } from 'lucide-react';
 
 interface JobDetailPanelProps {
   job: Job | null;
@@ -18,13 +18,20 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({ job, onClose, is
       {/* Header */}
       <div className="sticky top-0 bg-white/95 dark:bg-dev-900/95 backdrop-blur-md border-b border-slate-200 dark:border-dev-700 p-6 flex justify-between items-start z-10 transition-colors duration-300">
         <div className="flex-1 pr-4">
-           <div className="flex items-center gap-2 mb-2">
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono border border-green-600 dark:border-dev-success text-green-700 dark:text-dev-success bg-green-50 dark:bg-dev-success/10 uppercase tracking-wider">
-                Active
+           <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono border border-green-600 dark:border-dev-success text-green-700 dark:text-dev-success bg-green-50 dark:bg-dev-success/10 uppercase tracking-wider flex items-center gap-1">
+                <ShieldCheck size={12} /> Live Listing
               </span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono border border-slate-300 dark:border-dev-700 text-slate-500 dark:text-dev-muted uppercase tracking-wider">
-                {job.id.slice(0, 8)}
-              </span>
+              {job.source && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono border border-blue-300 dark:border-dev-600 text-blue-700 dark:text-dev-accent bg-blue-50 dark:bg-dev-accent/10 uppercase tracking-wider">
+                  Source: {job.source}
+                </span>
+              )}
+              {job.category && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono border border-cyan-300 dark:border-cyan-800 text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/20 uppercase tracking-wider">
+                  {job.category}
+                </span>
+              )}
            </div>
            <h2 className="text-2xl font-bold text-slate-900 dark:text-dev-text mb-1">{job.title}</h2>
            <div className="flex items-center gap-2 text-blue-600 dark:text-dev-accent font-mono text-sm">
@@ -58,7 +65,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({ job, onClose, is
         <div className="grid grid-cols-2 gap-4">
            <div className="p-4 rounded-lg bg-slate-50 dark:bg-dev-800 border border-slate-200 dark:border-dev-700">
              <p className="text-xs text-slate-500 dark:text-dev-muted font-mono mb-1">COMPENSATION</p>
-             <p className="text-amber-600 dark:text-dev-warning font-semibold text-sm">{job.salary || 'Not disclosed'}</p>
+             <p className="text-amber-600 dark:text-dev-warning font-semibold text-sm">{job.salary || 'Competitive'}</p>
            </div>
            <div className="p-4 rounded-lg bg-slate-50 dark:bg-dev-800 border border-slate-200 dark:border-dev-700">
              <p className="text-xs text-slate-500 dark:text-dev-muted font-mono mb-1">LOCATION</p>
@@ -80,7 +87,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({ job, onClose, is
         <div>
           <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-dev-text uppercase tracking-widest mb-4">
             <Code size={16} className="text-blue-600 dark:text-dev-accent" />
-            Tech Stack & Requirements
+            Tech Stack & Keywords
           </h3>
           <div className="flex flex-wrap gap-2">
             {job.tags.map((tag) => (
@@ -95,12 +102,12 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({ job, onClose, is
         <div>
           <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-dev-text uppercase tracking-widest mb-4">
             <CheckCircle size={16} className="text-blue-600 dark:text-dev-accent" />
-            Job Description
+            Job Overview & Requirements
           </h3>
-          <div className="prose prose-slate dark:prose-invert prose-sm max-w-none text-slate-600 dark:text-dev-muted leading-relaxed">
+          <div className="prose prose-slate dark:prose-invert prose-sm max-w-none text-slate-600 dark:text-dev-muted leading-relaxed whitespace-pre-line">
             <p>{job.description}</p>
-            <p className="mt-4 italic text-xs border-l-2 border-slate-300 dark:border-dev-700 pl-4 py-2 bg-slate-50 dark:bg-dev-800/30 text-slate-500 dark:text-dev-muted">
-              Note: This description was summarized by AI from the original job posting. Please check the official application page for full details.
+            <p className="mt-4 italic text-xs border-l-2 border-blue-500 dark:border-dev-accent pl-4 py-2 bg-blue-50/50 dark:bg-dev-800/30 text-slate-500 dark:text-dev-muted">
+              Direct live job listing fetched from {job.source || 'verified global job board'}. Click below to apply directly on the company's application portal.
             </p>
           </div>
         </div>
@@ -112,13 +119,13 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({ job, onClose, is
             target="_blank" 
             rel="noopener noreferrer"
             className={`
-              flex items-center justify-center gap-2 w-full py-4 rounded-lg font-bold text-white transition-all
+              flex items-center justify-center gap-2 w-full py-4 rounded-lg font-bold text-white transition-all text-base
               ${job.applyLink 
                 ? 'bg-blue-600 dark:bg-dev-accent hover:bg-blue-700 dark:hover:bg-blue-600 shadow-lg hover:shadow-xl shadow-blue-500/20' 
                 : 'bg-slate-300 dark:bg-dev-700 cursor-not-allowed text-slate-500 dark:text-dev-muted'}
             `}
           >
-            {job.applyLink ? 'Apply for this Role' : 'Application Link Not Found'}
+            {job.applyLink ? `Apply Directly at ${job.company}` : 'Application Link Not Found'}
             <ExternalLink size={18} />
           </a>
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter, RefreshCw, Calendar, Star } from 'lucide-react';
+import { Search, Filter, RefreshCw, Calendar, Star, Globe, Code } from 'lucide-react';
 import { SearchFilters } from '../types';
 
 interface FilterBarProps {
@@ -34,7 +34,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             type="text"
             value={filters.query}
             onChange={(e) => setFilters(prev => ({ ...prev, query: e.target.value }))}
-            placeholder="Search roles (e.g. React, Senior)..."
+            placeholder="Search software roles, companies, tech (e.g. React, Python)..."
             className="w-full bg-slate-100 dark:bg-dev-800 border border-slate-200 dark:border-dev-700 text-slate-900 dark:text-dev-text text-sm rounded-md pl-10 pr-4 py-2.5 focus:outline-none focus:border-blue-500 dark:focus:border-dev-accent focus:ring-1 focus:ring-blue-500 dark:focus:ring-dev-accent transition-all font-mono placeholder:text-slate-400 dark:placeholder:text-dev-600"
           />
         </div>
@@ -42,8 +42,45 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         {/* Dropdowns & Actions */}
         <div className="flex gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 scrollbar-hide items-center">
           
-          {/* Experience Filter */}
+          {/* Software Role Category Filter */}
+          <div className="relative min-w-[150px]">
+            <select
+              value={filters.category}
+              onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
+              className="appearance-none w-full bg-slate-100 dark:bg-dev-800 border border-slate-200 dark:border-dev-700 text-slate-700 dark:text-dev-text text-xs font-mono rounded-md pl-3 pr-8 py-2.5 focus:outline-none focus:border-blue-500 dark:focus:border-dev-accent cursor-pointer hover:bg-slate-200 dark:hover:bg-dev-700 transition-colors"
+            >
+              <option value="">Category: All Software</option>
+              <option value="Frontend">Frontend</option>
+              <option value="Backend">Backend</option>
+              <option value="Fullstack">Fullstack</option>
+              <option value="Mobile">Mobile</option>
+              <option value="DevOps">DevOps & Cloud</option>
+              <option value="AI / Data">AI & Data</option>
+              <option value="QA / Testing">QA & Testing</option>
+              <option value="Software Engineering">Software General</option>
+            </select>
+            <Code size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-dev-muted pointer-events-none" />
+          </div>
+
+          {/* Region / Location Filter */}
           <div className="relative min-w-[140px]">
+            <select
+              value={filters.location}
+              onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+              className="appearance-none w-full bg-slate-100 dark:bg-dev-800 border border-slate-200 dark:border-dev-700 text-slate-700 dark:text-dev-text text-xs font-mono rounded-md pl-3 pr-8 py-2.5 focus:outline-none focus:border-blue-500 dark:focus:border-dev-accent cursor-pointer hover:bg-slate-200 dark:hover:bg-dev-700 transition-colors"
+            >
+              <option value="">Region: Worldwide</option>
+              <option value="Worldwide">Worldwide / Any</option>
+              <option value="US">Americas / USA</option>
+              <option value="Europe">Europe / UK</option>
+              <option value="APAC">Asia-Pacific</option>
+              <option value="Remote">Remote Only</option>
+            </select>
+            <Globe size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-dev-muted pointer-events-none" />
+          </div>
+
+          {/* Experience Filter */}
+          <div className="relative min-w-[130px]">
             <select
               value={filters.experience}
               onChange={(e) => setFilters(prev => ({ ...prev, experience: e.target.value }))}
@@ -53,13 +90,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <option value="Junior">Junior</option>
               <option value="Mid">Mid-Level</option>
               <option value="Senior">Senior</option>
-              <option value="Lead">Lead/Staff</option>
+              <option value="Lead">Lead / Staff</option>
             </select>
             <Filter size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-dev-muted pointer-events-none" />
           </div>
 
           {/* Job Type Filter */}
-          <div className="relative min-w-[140px]">
+          <div className="relative min-w-[130px]">
             <select
               value={filters.type}
               onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
@@ -74,7 +111,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </div>
 
           {/* Date Filter */}
-          <div className="relative min-w-[140px]">
+          <div className="relative min-w-[130px]">
             <select
               value={filters.dateRange}
               onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value }))}
