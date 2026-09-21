@@ -25,6 +25,14 @@ function cleanHtml(rawHtml: string = ''): string {
     .trim();
 }
 
+function getCompanyLogoUrl(company: string = '', originalLogo?: string): string {
+  if (originalLogo && (originalLogo.startsWith('http://') || originalLogo.startsWith('https://'))) {
+    return originalLogo;
+  }
+  const cleanName = company.replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'Tech';
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0284c7&color=ffffff&bold=true&length=2&font-size=0.45`;
+}
+
 function inferCategory(title: string = '', tags: string[] = []): string {
   const t = (title + ' ' + tags.join(' ')).toLowerCase();
   if (t.includes('frontend') || t.includes('react') || t.includes('vue') || t.includes('angular') || t.includes('css') || t.includes('web developer')) {
@@ -75,11 +83,12 @@ async function fetchRemotive(): Promise<Job[]> {
     
     return data.jobs.map((j: any) => {
       const title = j.title || 'Software Developer';
+      const company = j.company_name || 'Tech Company';
       const tags = j.tags || [];
       return {
         id: 'remotive-' + (j.id || Math.random().toString(36).substring(7)),
         title,
-        company: j.company_name || 'Tech Company',
+        company,
         location: j.candidate_required_location || 'Worldwide Remote',
         type: j.job_type === 'full_time' ? 'Full-time' : j.job_type === 'contract' ? 'Contract' : 'Full-time',
         salary: j.salary || 'Competitive',
@@ -90,7 +99,7 @@ async function fetchRemotive(): Promise<Job[]> {
         experienceLevel: inferExperience(title, j.description),
         source: 'Remotive',
         category: inferCategory(title, tags),
-        companyLogo: j.company_logo || undefined
+        companyLogo: getCompanyLogoUrl(company, j.company_logo)
       };
     });
   } catch (e) {
@@ -109,6 +118,7 @@ async function fetchJobicy(): Promise<Job[]> {
 
     return data.jobs.map((j: any) => {
       const title = j.jobTitle || 'Software Engineer';
+      const company = j.companyName || 'Technology Firm';
       const tags = Array.isArray(j.jobCategory) ? j.jobCategory : [j.jobIndustry || 'Dev'];
       const salaryStr = (j.annualSalaryMin && j.annualSalaryMax)
         ? `$${Number(j.annualSalaryMin).toLocaleString()} - $${Number(j.annualSalaryMax).toLocaleString()}`
@@ -117,7 +127,7 @@ async function fetchJobicy(): Promise<Job[]> {
       return {
         id: 'jobicy-' + (j.id || Math.random().toString(36).substring(7)),
         title,
-        company: j.companyName || 'Technology Firm',
+        company,
         location: j.jobGeo || 'Worldwide Remote',
         type: Array.isArray(j.jobType) ? (j.jobType[0] || 'Full-time') : (j.jobType || 'Full-time'),
         salary: salaryStr,
@@ -128,7 +138,7 @@ async function fetchJobicy(): Promise<Job[]> {
         experienceLevel: j.jobLevel ? (j.jobLevel.charAt(0).toUpperCase() + j.jobLevel.slice(1)) : inferExperience(title, j.jobDescription),
         source: 'Jobicy',
         category: inferCategory(title, tags),
-        companyLogo: j.companyLogo || undefined
+        companyLogo: getCompanyLogoUrl(company, j.companyLogo)
       };
     });
   } catch (e) {
@@ -152,13 +162,14 @@ async function fetchArbeitnow(): Promise<Job[]> {
       })
       .map((j: any) => {
         const title = j.title || 'Software Engineer';
+        const company = j.company_name || 'Software Company';
         const tags = j.tags || [];
         const loc = j.location ? `${j.location}${j.remote ? ' (Remote)' : ''}` : 'Remote';
 
         return {
           id: 'arbeitnow-' + (j.slug || Math.random().toString(36).substring(7)),
           title,
-          company: j.company_name || 'Software Company',
+          company,
           location: loc,
           type: Array.isArray(j.job_types) ? (j.job_types.join(', ') || 'Full-time') : 'Full-time',
           salary: 'Competitive',
@@ -168,7 +179,8 @@ async function fetchArbeitnow(): Promise<Job[]> {
           applyLink: j.url || 'https://www.arbeitnow.com',
           experienceLevel: inferExperience(title, j.description),
           source: 'Arbeitnow',
-          category: inferCategory(title, tags)
+          category: inferCategory(title, tags),
+          companyLogo: getCompanyLogoUrl(company, j.company_logo)
         };
       });
   } catch (e) {
@@ -189,6 +201,7 @@ async function fetchRemoteOK(): Promise<Job[]> {
       .filter((j: any) => j && j.position)
       .map((j: any) => {
         const title = j.position || 'Software Engineer';
+        const company = j.company || 'Tech Start-up';
         const tags = j.tags || [];
         const salaryStr = (j.salary_min && j.salary_max)
           ? `$${Number(j.salary_min).toLocaleString()} - $${Number(j.salary_max).toLocaleString()}`
@@ -197,7 +210,7 @@ async function fetchRemoteOK(): Promise<Job[]> {
         return {
           id: 'remoteok-' + (j.id || Math.random().toString(36).substring(7)),
           title,
-          company: j.company || 'Tech Start-up',
+          company,
           location: j.location || 'Worldwide Remote',
           type: 'Full-time',
           salary: salaryStr,
@@ -208,7 +221,7 @@ async function fetchRemoteOK(): Promise<Job[]> {
           experienceLevel: inferExperience(title, j.description),
           source: 'RemoteOK',
           category: inferCategory(title, tags),
-          companyLogo: j.company_logo || j.logo || undefined
+          companyLogo: getCompanyLogoUrl(company, j.company_logo || j.logo)
         };
       });
   } catch (e) {
@@ -249,7 +262,8 @@ async function fetchHackerNewsJobs(): Promise<Job[]> {
         applyLink: j.url || `https://news.ycombinator.com/item?id=${j.objectID}`,
         experienceLevel: inferExperience(title, ''),
         source: 'Hacker News',
-        category: inferCategory(title, ['Software'])
+        category: inferCategory(title, ['Software']),
+        companyLogo: getCompanyLogoUrl(company)
       };
     });
   } catch (e) {

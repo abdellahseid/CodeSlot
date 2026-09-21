@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Job } from '../types';
 import { X, ExternalLink, Globe, Calendar, CheckCircle, Code, Bookmark, ShieldCheck } from 'lucide-react';
 
@@ -11,6 +11,14 @@ interface JobDetailPanelProps {
 
 export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({ job, onClose, isBookmarked, onToggleBookmark }) => {
   if (!job) return null;
+
+  const cleanName = job.company.replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'Tech';
+  const fallbackLogo = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0284c7&color=ffffff&bold=true&length=2&font-size=0.45`;
+  const [logoUrl, setLogoUrl] = useState<string>(job.companyLogo || fallbackLogo);
+
+  useEffect(() => {
+    setLogoUrl(job.companyLogo || fallbackLogo);
+  }, [job?.id, job?.companyLogo, fallbackLogo]);
 
   return (
     <div className="fixed inset-y-0 right-0 w-full md:w-[600px] bg-white dark:bg-dev-900 border-l border-slate-200 dark:border-dev-700 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
@@ -33,8 +41,18 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({ job, onClose, is
                 </span>
               )}
            </div>
-           <h2 className="text-2xl font-bold text-slate-900 dark:text-dev-text mb-1">{job.title}</h2>
-           <div className="flex items-center gap-2 text-blue-600 dark:text-dev-accent font-mono text-sm">
+           
+           <div className="flex items-center gap-3 mb-2">
+             <img 
+               src={logoUrl} 
+               alt={job.company} 
+               className="w-8 h-8 rounded-md border border-slate-200 dark:border-dev-700 object-cover shrink-0" 
+               onError={() => setLogoUrl(fallbackLogo)}
+             />
+             <h2 className="text-2xl font-bold text-slate-900 dark:text-dev-text">{job.title}</h2>
+           </div>
+
+           <div className="flex items-center gap-2 text-blue-600 dark:text-dev-accent font-mono text-sm ml-1">
              <Globe size={14} />
              <span>{job.company}</span>
            </div>

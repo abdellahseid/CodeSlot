@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Job } from '../types';
 import { MapPin, Clock, Briefcase, DollarSign, ChevronRight, Bookmark } from 'lucide-react';
 
@@ -10,6 +10,15 @@ interface JobCardProps {
 }
 
 export const JobCard: React.FC<JobCardProps> = ({ job, onClick, isActive, isBookmarked }) => {
+  const cleanName = job.company.replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'Tech';
+  const fallbackLogo = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0284c7&color=ffffff&bold=true&length=2&font-size=0.45`;
+
+  const [currentLogo, setCurrentLogo] = useState<string>(job.companyLogo || fallbackLogo);
+
+  useEffect(() => {
+    setCurrentLogo(job.companyLogo || fallbackLogo);
+  }, [job.companyLogo, fallbackLogo]);
+
   return (
     <div 
       onClick={() => onClick(job)}
@@ -24,15 +33,19 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onClick, isActive, isBook
         {/* Top Meta */}
         <div className="flex justify-between items-start mb-4 gap-2">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-gradient-to-br dark:from-dev-700 dark:to-dev-800 flex items-center justify-center border border-slate-200 dark:border-dev-600 text-slate-700 dark:text-dev-text font-bold text-sm shadow-sm relative overflow-hidden shrink-0">
-               {job.companyLogo ? (
-                 <img src={job.companyLogo} alt={job.company} className="w-full h-full object-contain p-1" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
-               ) : null}
-               <span className={job.companyLogo ? 'hidden' : 'block'}>
-                 {job.company.substring(0, 2).toUpperCase()}
-               </span>
+             <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-dev-700 flex items-center justify-center border border-slate-200 dark:border-dev-600 shadow-sm relative overflow-hidden shrink-0">
+               <img 
+                 src={currentLogo} 
+                 alt={`${job.company} logo`} 
+                 className="w-full h-full object-cover rounded-md p-0.5"
+                 onError={() => {
+                   if (currentLogo !== fallbackLogo) {
+                     setCurrentLogo(fallbackLogo);
+                   }
+                 }}
+               />
                {isBookmarked && (
-                 <div className="absolute -top-1 -right-1 bg-amber-500 text-white p-0.5 rounded-full border border-white dark:border-dev-800">
+                 <div className="absolute -top-1 -right-1 bg-amber-500 text-white p-0.5 rounded-full border border-white dark:border-dev-800 z-10">
                     <Bookmark size={8} fill="currentColor" />
                  </div>
                )}
