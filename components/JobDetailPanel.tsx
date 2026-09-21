@@ -12,13 +12,15 @@ interface JobDetailPanelProps {
 export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({ job, onClose, isBookmarked, onToggleBookmark }) => {
   if (!job) return null;
 
-  const cleanName = job.company.replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'Tech';
+  const cleanName = String(job.company || '').replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'Tech';
   const fallbackLogo = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0284c7&color=ffffff&bold=true&length=2&font-size=0.45`;
   const [logoUrl, setLogoUrl] = useState<string>(job.companyLogo || fallbackLogo);
 
   useEffect(() => {
     setLogoUrl(job.companyLogo || fallbackLogo);
   }, [job?.id, job?.companyLogo, fallbackLogo]);
+
+  const safeTags = Array.isArray(job.tags) ? job.tags : [];
 
   return (
     <div className="fixed inset-y-0 right-0 w-full md:w-[600px] bg-white dark:bg-dev-900 border-l border-slate-200 dark:border-dev-700 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
@@ -108,9 +110,9 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({ job, onClose, is
             Tech Stack & Keywords
           </h3>
           <div className="flex flex-wrap gap-2">
-            {job.tags.map((tag) => (
-              <span key={tag} className="px-3 py-1.5 rounded-md bg-white dark:bg-dev-800 border border-slate-300 dark:border-dev-600 text-slate-700 dark:text-cyan-400 font-mono text-xs shadow-sm dark:shadow-none cursor-default">
-                {tag}
+            {safeTags.map((tag, idx) => (
+              <span key={idx} className="px-3 py-1.5 rounded-md bg-white dark:bg-dev-800 border border-slate-300 dark:border-dev-600 text-slate-700 dark:text-cyan-400 font-mono text-xs shadow-sm dark:shadow-none cursor-default">
+                {typeof tag === 'string' ? tag : String(tag || '')}
               </span>
             ))}
           </div>

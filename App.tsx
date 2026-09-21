@@ -40,7 +40,11 @@ export default function App() {
     // Load Bookmarks
     const saved = localStorage.getItem('devhunt_bookmarks');
     if (saved) {
-      setBookmarkedIds(JSON.parse(saved));
+      try {
+        setBookmarkedIds(JSON.parse(saved));
+      } catch (e) {
+        // ignore
+      }
     }
   }, []);
 
@@ -110,9 +114,10 @@ export default function App() {
     loadJobs();
   }, [filters]); 
 
-  const parseRelativeTime = (timeStr: string): number => {
+  const parseRelativeTime = (timeStr: any): number => {
+    if (!timeStr) return 0;
     const now = new Date();
-    const str = timeStr.toLowerCase();
+    const str = String(timeStr).toLowerCase();
     
     if (str.includes('just') || str.includes('sec')) return now.getTime();
     if (str.includes('min')) return now.getTime() - (parseInt(str) || 1) * 60 * 1000;
@@ -127,30 +132,40 @@ export default function App() {
     const monthMatch = str.match(/(\d+)\s+month/);
     if (monthMatch) return now.getTime() - parseInt(monthMatch[1]) * 30 * 86400000;
 
-    const parsedDate = Date.parse(timeStr);
+    const parsedDate = Date.parse(str);
     if (!isNaN(parsedDate)) return parsedDate;
 
     return 0;
   };
 
+  const safeStr = (v: any): string => (typeof v === 'string' ? v : (v ? String(v) : ''));
+
   const filteredJobs = searchState.data
     .filter(job => {
+      if (!job) return false;
+
       // Bookmark Filter
       if (showBookmarkedOnly && !bookmarkedIds.includes(job.id)) {
           return false;
       }
 
       const matchesCategory = !filters.category || job.category === filters.category;
-      const matchesType = !filters.type || job.type.toLowerCase().includes(filters.type.toLowerCase());
+      
+      const matchesType = !filters.type || 
+        safeStr(job.type).toLowerCase().includes(filters.type.toLowerCase());
+      
       const matchesExp = !filters.experience || 
-        (job.experienceLevel && job.experienceLevel.toLowerCase().includes(filters.experience.toLowerCase())) ||
-        job.title.toLowerCase().includes(filters.experience.toLowerCase());
-      const matchesLocation = !filters.location || job.location.toLowerCase().includes(filters.location.toLowerCase());
+        safeStr(job.experienceLevel).toLowerCase().includes(filters.experience.toLowerCase()) ||
+        safeStr(job.title).toLowerCase().includes(filters.experience.toLowerCase());
+      
+      const matchesLocation = !filters.location || 
+        safeStr(job.location).toLowerCase().includes(filters.location.toLowerCase());
 
-      const matchesQuery = !filters.query || 
-        job.title.toLowerCase().includes(filters.query.toLowerCase()) || 
-        job.company.toLowerCase().includes(filters.query.toLowerCase()) ||
-        job.tags.some(tag => tag.toLowerCase().includes(filters.query.toLowerCase()));
+      const queryLower = filters.query.toLowerCase().trim();
+      const matchesQuery = !queryLower || 
+        safeStr(job.title).toLowerCase().includes(queryLower) || 
+        safeStr(job.company).toLowerCase().includes(queryLower) ||
+        (Array.isArray(job.tags) && job.tags.some(tag => safeStr(tag).toLowerCase().includes(queryLower)));
 
       let matchesDate = true;
       if (filters.dateRange) {

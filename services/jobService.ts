@@ -1,5 +1,25 @@
 import { Job, SearchFilters } from '../types';
 
+function normalizeTags(rawTags: any): string[] {
+  if (!rawTags) return ['Software'];
+  if (Array.isArray(rawTags)) {
+    const list = rawTags
+      .map(t => {
+        if (typeof t === 'string') return t.trim();
+        if (typeof t === 'number') return String(t);
+        if (t && typeof t === 'object') return t.name || t.label || t.title || String(t);
+        return '';
+      })
+      .filter(Boolean);
+    return list.length ? list : ['Software'];
+  }
+  if (typeof rawTags === 'string') {
+    const split = rawTags.split(',').map(s => s.trim()).filter(Boolean);
+    return split.length ? split : ['Software'];
+  }
+  return ['Software'];
+}
+
 export const fetchRealSoftwareJobs = async (filters: SearchFilters): Promise<Job[]> => {
   try {
     const params = new URLSearchParams();
@@ -13,7 +33,10 @@ export const fetchRealSoftwareJobs = async (filters: SearchFilters): Promise<Job
     if (res.ok) {
       const data = await res.json();
       if (data && Array.isArray(data.data)) {
-        return data.data;
+        return data.data.map((j: any) => ({
+          ...j,
+          tags: normalizeTags(j.tags)
+        }));
       }
     }
   } catch (error) {
@@ -27,8 +50,7 @@ export const fetchRealSoftwareJobs = async (filters: SearchFilters): Promise<Job
 async function fetchClientFallbackJobs(filters: SearchFilters): Promise<Job[]> {
   const jobs: Job[] = [];
 
-  // Helper HTML cleaner
-  const cleanHtml = (raw: string = '') => raw.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
+  const cleanHtml = (raw: string = '') => String(raw || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
 
   try {
     const res = await fetch('https://jobicy.com/api/v2/remote-jobs?count=50&industry=dev');
@@ -38,18 +60,19 @@ async function fetchClientFallbackJobs(filters: SearchFilters): Promise<Job[]> {
         data.jobs.forEach((j: any) => {
           jobs.push({
             id: 'jobicy-' + j.id,
-            title: j.jobTitle || 'Software Engineer',
-            company: j.companyName || 'Tech Firm',
-            location: j.jobGeo || 'Remote',
-            type: Array.isArray(j.jobType) ? (j.jobType[0] || 'Full-time') : 'Full-time',
+            title: String(j.jobTitle || 'Software Engineer'),
+            company: String(j.companyName || 'Tech Firm'),
+            location: String(j.jobGeo || 'Remote'),
+            type: Array.isArray(j.jobType) ? String(j.jobType[0] || 'Full-time') : 'Full-time',
             salary: (j.annualSalaryMin && j.annualSalaryMax) ? `$${j.annualSalaryMin} - $${j.annualSalaryMax}` : 'Competitive',
-            tags: Array.isArray(j.jobCategory) ? j.jobCategory : ['Software'],
+            tags: normalizeTags(j.jobCategory || j.jobIndustry),
             description: cleanHtml(j.jobDescription || j.jobExcerpt),
             postedAt: j.pubDate ? new Date(j.pubDate).toLocaleDateString() : 'Recently',
-            applyLink: j.url,
-            experienceLevel: j.jobLevel || 'Mid',
+            applyLink: String(j.url || 'https://jobicy.com'),
+            experienceLevel: String(j.jobLevel || 'Mid'),
             source: 'Jobicy',
-            category: 'Software Engineering'
+            category: 'Software Engineering',
+            companyLogo: j.companyLogo || `https://ui-avatars.com/api/?name=${encodeURIComponent(String(j.companyName || 'Tech'))}&background=0284c7&color=ffffff&bold=true`
           });
         });
       }
@@ -66,18 +89,19 @@ async function fetchClientFallbackJobs(filters: SearchFilters): Promise<Job[]> {
         data.data.forEach((j: any) => {
           jobs.push({
             id: 'arbeitnow-' + j.slug,
-            title: j.title || 'Software Developer',
-            company: j.company_name || 'Software Company',
+            title: String(j.title || 'Software Developer'),
+            company: String(j.company_name || 'Software Company'),
             location: j.location ? `${j.location}${j.remote ? ' (Remote)' : ''}` : 'Remote',
             type: 'Full-time',
             salary: 'Competitive',
-            tags: j.tags || ['Software'],
+            tags: normalizeTags(j.tags),
             description: cleanHtml(j.description),
             postedAt: j.created_at ? new Date(j.created_at * 1000).toLocaleDateString() : 'Recently',
-            applyLink: j.url,
+            applyLink: String(j.url || 'https://www.arbeitnow.com'),
             experienceLevel: 'Mid',
             source: 'Arbeitnow',
-            category: 'Software Engineering'
+            category: 'Software Engineering',
+            companyLogo: j.company_logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(String(j.company_name || 'Tech'))}&background=0284c7&color=ffffff&bold=true`
           });
         });
       }

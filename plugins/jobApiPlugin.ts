@@ -6,7 +6,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
 
 function cleanHtml(rawHtml: string = ''): string {
   if (!rawHtml) return '';
-  return rawHtml
+  return String(rawHtml)
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<br\s*[\/]?>/gi, '\n')
@@ -25,16 +25,36 @@ function cleanHtml(rawHtml: string = ''): string {
     .trim();
 }
 
+function normalizeTags(rawTags: any): string[] {
+  if (!rawTags) return ['Software'];
+  if (Array.isArray(rawTags)) {
+    const list = rawTags
+      .map(t => {
+        if (typeof t === 'string') return t.trim();
+        if (typeof t === 'number') return String(t);
+        if (t && typeof t === 'object') return t.name || t.label || t.title || String(t);
+        return '';
+      })
+      .filter(Boolean);
+    return list.length ? list : ['Software'];
+  }
+  if (typeof rawTags === 'string') {
+    const split = rawTags.split(',').map(s => s.trim()).filter(Boolean);
+    return split.length ? split : ['Software'];
+  }
+  return ['Software'];
+}
+
 function getCompanyLogoUrl(company: string = '', originalLogo?: string): string {
-  if (originalLogo && (originalLogo.startsWith('http://') || originalLogo.startsWith('https://'))) {
+  if (originalLogo && typeof originalLogo === 'string' && (originalLogo.startsWith('http://') || originalLogo.startsWith('https://'))) {
     return originalLogo;
   }
-  const cleanName = company.replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'Tech';
+  const cleanName = String(company).replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'Tech';
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0284c7&color=ffffff&bold=true&length=2&font-size=0.45`;
 }
 
 function inferCategory(title: string = '', tags: string[] = []): string {
-  const t = (title + ' ' + tags.join(' ')).toLowerCase();
+  const t = (String(title) + ' ' + tags.join(' ')).toLowerCase();
   if (t.includes('frontend') || t.includes('react') || t.includes('vue') || t.includes('angular') || t.includes('css') || t.includes('web developer')) {
     return 'Frontend';
   }
@@ -60,7 +80,7 @@ function inferCategory(title: string = '', tags: string[] = []): string {
 }
 
 function inferExperience(title: string = '', description: string = ''): 'Junior' | 'Mid' | 'Senior' | 'Lead' {
-  const text = (title + ' ' + description).toLowerCase();
+  const text = (String(title) + ' ' + String(description)).toLowerCase();
   if (text.includes('lead') || text.includes('staff') || text.includes('principal') || text.includes('head') || text.includes('architect')) {
     return 'Lead';
   }
@@ -82,20 +102,20 @@ async function fetchRemotive(): Promise<Job[]> {
     if (!data.jobs || !Array.isArray(data.jobs)) return [];
     
     return data.jobs.map((j: any) => {
-      const title = j.title || 'Software Developer';
-      const company = j.company_name || 'Tech Company';
-      const tags = j.tags || [];
+      const title = String(j.title || 'Software Developer');
+      const company = String(j.company_name || 'Tech Company');
+      const tags = normalizeTags(j.tags);
       return {
         id: 'remotive-' + (j.id || Math.random().toString(36).substring(7)),
         title,
         company,
-        location: j.candidate_required_location || 'Worldwide Remote',
+        location: String(j.candidate_required_location || 'Worldwide Remote'),
         type: j.job_type === 'full_time' ? 'Full-time' : j.job_type === 'contract' ? 'Contract' : 'Full-time',
-        salary: j.salary || 'Competitive',
-        tags: tags.length ? tags : ['Software', 'Remote'],
+        salary: String(j.salary || 'Competitive'),
+        tags,
         description: cleanHtml(j.description),
         postedAt: j.publication_date ? new Date(j.publication_date).toLocaleDateString() : 'Recently',
-        applyLink: j.url || 'https://remotive.com',
+        applyLink: String(j.url || 'https://remotive.com'),
         experienceLevel: inferExperience(title, j.description),
         source: 'Remotive',
         category: inferCategory(title, tags),
@@ -117,25 +137,27 @@ async function fetchJobicy(): Promise<Job[]> {
     if (!data.jobs || !Array.isArray(data.jobs)) return [];
 
     return data.jobs.map((j: any) => {
-      const title = j.jobTitle || 'Software Engineer';
-      const company = j.companyName || 'Technology Firm';
-      const tags = Array.isArray(j.jobCategory) ? j.jobCategory : [j.jobIndustry || 'Dev'];
+      const title = String(j.jobTitle || 'Software Engineer');
+      const company = String(j.companyName || 'Technology Firm');
+      const tags = normalizeTags(j.jobCategory || j.jobIndustry);
       const salaryStr = (j.annualSalaryMin && j.annualSalaryMax)
         ? `$${Number(j.annualSalaryMin).toLocaleString()} - $${Number(j.annualSalaryMax).toLocaleString()}`
         : 'Competitive';
+
+      const typeVal = Array.isArray(j.jobType) ? j.jobType[0] : j.jobType;
 
       return {
         id: 'jobicy-' + (j.id || Math.random().toString(36).substring(7)),
         title,
         company,
-        location: j.jobGeo || 'Worldwide Remote',
-        type: Array.isArray(j.jobType) ? (j.jobType[0] || 'Full-time') : (j.jobType || 'Full-time'),
+        location: String(j.jobGeo || 'Worldwide Remote'),
+        type: String(typeVal || 'Full-time'),
         salary: salaryStr,
-        tags: tags.length ? tags : ['Software'],
+        tags,
         description: cleanHtml(j.jobDescription || j.jobExcerpt),
         postedAt: j.pubDate ? new Date(j.pubDate).toLocaleDateString() : 'Recently',
-        applyLink: j.url || 'https://jobicy.com',
-        experienceLevel: j.jobLevel ? (j.jobLevel.charAt(0).toUpperCase() + j.jobLevel.slice(1)) : inferExperience(title, j.jobDescription),
+        applyLink: String(j.url || 'https://jobicy.com'),
+        experienceLevel: j.jobLevel ? (String(j.jobLevel).charAt(0).toUpperCase() + String(j.jobLevel).slice(1)) : inferExperience(title, j.jobDescription),
         source: 'Jobicy',
         category: inferCategory(title, tags),
         companyLogo: getCompanyLogoUrl(company, j.companyLogo)
@@ -157,13 +179,13 @@ async function fetchArbeitnow(): Promise<Job[]> {
 
     return data.data
       .filter((j: any) => {
-        const text = (j.title + ' ' + (j.tags || []).join(' ')).toLowerCase();
+        const text = (String(j.title || '') + ' ' + normalizeTags(j.tags).join(' ')).toLowerCase();
         return text.includes('developer') || text.includes('engineer') || text.includes('software') || text.includes('frontend') || text.includes('backend') || text.includes('fullstack') || text.includes('tech');
       })
       .map((j: any) => {
-        const title = j.title || 'Software Engineer';
-        const company = j.company_name || 'Software Company';
-        const tags = j.tags || [];
+        const title = String(j.title || 'Software Engineer');
+        const company = String(j.company_name || 'Software Company');
+        const tags = normalizeTags(j.tags);
         const loc = j.location ? `${j.location}${j.remote ? ' (Remote)' : ''}` : 'Remote';
 
         return {
@@ -173,10 +195,10 @@ async function fetchArbeitnow(): Promise<Job[]> {
           location: loc,
           type: Array.isArray(j.job_types) ? (j.job_types.join(', ') || 'Full-time') : 'Full-time',
           salary: 'Competitive',
-          tags: tags.length ? tags : ['Software', 'Engineering'],
+          tags,
           description: cleanHtml(j.description),
           postedAt: j.created_at ? new Date(j.created_at * 1000).toLocaleDateString() : 'Recently',
-          applyLink: j.url || 'https://www.arbeitnow.com',
+          applyLink: String(j.url || 'https://www.arbeitnow.com'),
           experienceLevel: inferExperience(title, j.description),
           source: 'Arbeitnow',
           category: inferCategory(title, tags),
@@ -200,9 +222,9 @@ async function fetchRemoteOK(): Promise<Job[]> {
     return data
       .filter((j: any) => j && j.position)
       .map((j: any) => {
-        const title = j.position || 'Software Engineer';
-        const company = j.company || 'Tech Start-up';
-        const tags = j.tags || [];
+        const title = String(j.position || 'Software Engineer');
+        const company = String(j.company || 'Tech Start-up');
+        const tags = normalizeTags(j.tags);
         const salaryStr = (j.salary_min && j.salary_max)
           ? `$${Number(j.salary_min).toLocaleString()} - $${Number(j.salary_max).toLocaleString()}`
           : 'Competitive';
@@ -211,13 +233,13 @@ async function fetchRemoteOK(): Promise<Job[]> {
           id: 'remoteok-' + (j.id || Math.random().toString(36).substring(7)),
           title,
           company,
-          location: j.location || 'Worldwide Remote',
+          location: String(j.location || 'Worldwide Remote'),
           type: 'Full-time',
           salary: salaryStr,
-          tags: tags.length ? tags : ['Remote', 'Software'],
+          tags,
           description: cleanHtml(j.description),
           postedAt: j.date ? new Date(j.date).toLocaleDateString() : 'Recently',
-          applyLink: j.apply_url || j.url || 'https://remoteok.com',
+          applyLink: String(j.apply_url || j.url || 'https://remoteok.com'),
           experienceLevel: inferExperience(title, j.description),
           source: 'RemoteOK',
           category: inferCategory(title, tags),
@@ -239,7 +261,7 @@ async function fetchHackerNewsJobs(): Promise<Job[]> {
     if (!data.hits || !Array.isArray(data.hits)) return [];
 
     return data.hits.map((j: any) => {
-      const rawTitle = j.title || 'Software Engineer';
+      const rawTitle = String(j.title || 'Software Engineer');
       let company = 'Hacker News Startup';
       let title = rawTitle;
 
@@ -259,7 +281,7 @@ async function fetchHackerNewsJobs(): Promise<Job[]> {
         tags: ['Hacker News', 'Software', 'Startup'],
         description: `Official job posting from ${company} on Hacker News. Apply directly using the link below.`,
         postedAt: j.created_at ? new Date(j.created_at).toLocaleDateString() : 'Recently',
-        applyLink: j.url || `https://news.ycombinator.com/item?id=${j.objectID}`,
+        applyLink: String(j.url || `https://news.ycombinator.com/item?id=${j.objectID}`),
         experienceLevel: inferExperience(title, ''),
         source: 'Hacker News',
         category: inferCategory(title, ['Software']),
@@ -314,7 +336,7 @@ export function jobApiPlugin(): Plugin {
       server.middlewares.use('/api/jobs', async (req, res) => {
         try {
           const urlObj = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-          const query = (urlObj.searchParams.get('query') || '').toLowerCase();
+          const query = (urlObj.searchParams.get('query') || '').toLowerCase().trim();
           const category = urlObj.searchParams.get('category') || '';
           const type = urlObj.searchParams.get('type') || '';
           const experience = urlObj.searchParams.get('experience') || '';
@@ -324,10 +346,10 @@ export function jobApiPlugin(): Plugin {
 
           if (query) {
             jobs = jobs.filter(j =>
-              j.title.toLowerCase().includes(query) ||
-              j.company.toLowerCase().includes(query) ||
-              j.tags.some(t => t.toLowerCase().includes(query)) ||
-              j.description.toLowerCase().includes(query)
+              String(j.title || '').toLowerCase().includes(query) ||
+              String(j.company || '').toLowerCase().includes(query) ||
+              (Array.isArray(j.tags) && j.tags.some(t => String(t || '').toLowerCase().includes(query))) ||
+              String(j.description || '').toLowerCase().includes(query)
             );
           }
 
@@ -336,15 +358,15 @@ export function jobApiPlugin(): Plugin {
           }
 
           if (type) {
-            jobs = jobs.filter(j => j.type.toLowerCase().includes(type.toLowerCase()));
+            jobs = jobs.filter(j => String(j.type || '').toLowerCase().includes(type.toLowerCase()));
           }
 
           if (experience) {
-            jobs = jobs.filter(j => j.experienceLevel?.toLowerCase().includes(experience.toLowerCase()));
+            jobs = jobs.filter(j => String(j.experienceLevel || '').toLowerCase().includes(experience.toLowerCase()));
           }
 
           if (location) {
-            jobs = jobs.filter(j => j.location.toLowerCase().includes(location.toLowerCase()));
+            jobs = jobs.filter(j => String(j.location || '').toLowerCase().includes(location.toLowerCase()));
           }
 
           res.statusCode = 200;

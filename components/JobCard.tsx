@@ -10,7 +10,7 @@ interface JobCardProps {
 }
 
 export const JobCard: React.FC<JobCardProps> = ({ job, onClick, isActive, isBookmarked }) => {
-  const cleanName = job.company.replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'Tech';
+  const cleanName = String(job.company || '').replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'Tech';
   const fallbackLogo = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0284c7&color=ffffff&bold=true&length=2&font-size=0.45`;
 
   const [currentLogo, setCurrentLogo] = useState<string>(job.companyLogo || fallbackLogo);
@@ -18,6 +18,8 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onClick, isActive, isBook
   useEffect(() => {
     setCurrentLogo(job.companyLogo || fallbackLogo);
   }, [job.companyLogo, fallbackLogo]);
+
+  const safeTags = Array.isArray(job.tags) ? job.tags : [];
 
   return (
     <div 
@@ -94,13 +96,13 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onClick, isActive, isBook
       <div>
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-2">
-          {job.tags.slice(0, 4).map((tag, idx) => (
+          {safeTags.slice(0, 4).map((tag, idx) => (
             <span key={idx} className="text-[11px] font-medium px-2.5 py-1 rounded-md bg-slate-50 dark:bg-dev-700/50 text-slate-600 dark:text-cyan-400 border border-slate-200 dark:border-cyan-900/30">
-              {tag}
+              {typeof tag === 'string' ? tag : String(tag || '')}
             </span>
           ))}
-          {job.tags.length > 4 && (
-            <span className="text-[11px] px-2 py-1 text-slate-400 dark:text-dev-muted">+ {job.tags.length - 4}</span>
+          {safeTags.length > 4 && (
+            <span className="text-[11px] px-2 py-1 text-slate-400 dark:text-dev-muted">+ {safeTags.length - 4}</span>
           )}
         </div>
       </div>
