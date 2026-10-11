@@ -5,6 +5,7 @@ import { jobApiPlugin } from './plugins/jobApiPlugin';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    const geminiApiKey = env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY || env.API_KEY || '';
     return {
       server: {
         port: 3000,
@@ -12,8 +13,9 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react(), jobApiPlugin()],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.API_KEY': JSON.stringify(geminiApiKey),
+        'process.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey),
+        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiApiKey)
       },
       resolve: {
         alias: {
